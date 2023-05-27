@@ -7,8 +7,8 @@ import torch
 class LogicDataSet(torch.utils.data.Dataset):
     def __init__(self, vocab_path="vocabulary", data_path="data/test"):
         self.load_vocabulary(vocab_path)
-        self.in_vocabulary_inverse = {v:k for k,v in self.in_vocabulary.items()}
-        self.out_vocabulary_inverse = {v:k for k,v in self.out_vocabulary.items()}
+        self.in_vocabulary_inverse = {v: k for k, v in self.in_vocabulary.items()}
+        self.out_vocabulary_inverse = {v: k for k, v in self.out_vocabulary.items()}
 
         self.file_to_data(data_path)
         self.batch_dim = 1
@@ -19,10 +19,12 @@ class LogicDataSet(torch.utils.data.Dataset):
         with open(path + ".tgt") as f:
             self.out_lines = f.readlines()
         self.in_idxs = [
-            [self.in_vocabulary[s] for s in sentence.split()] for sentence in self.in_lines
+            [self.in_vocabulary[s] for s in sentence.split()]
+            for sentence in self.in_lines
         ]
         self.out_idxs = [
-            [self.out_vocabulary[s] for s in sentence.split()] for sentence in self.out_lines
+            [self.out_vocabulary[s] for s in sentence.split()]
+            for sentence in self.out_lines
         ]
 
     def load_vocabulary(self, path):
@@ -45,10 +47,18 @@ class LogicDataSet(torch.utils.data.Dataset):
         }
         return d
 
-    def sample_to_text(self, batch_outputs, position:int):
+    def sample_to_text(self, batch_outputs, position: int):
         scores, out_len = batch_outputs
         out = scores.argmax(-1)
-        out = out.select(self.batch_dim, position)[:out_len[position].item()].cpu().numpy()
-        return ' '.join(self.out_vocabulary_inverse[s] for s in out)
+        out = (
+            out.select(self.batch_dim, position)[: out_len[position].item()]
+            .cpu()
+            .numpy()
+        )
+        return self.output_ids_to_text(out)
 
-        
+    def input_ids_to_text(self, idxs):
+        return " ".join(self.in_vocabulary_inverse[s] for s in idxs)
+
+    def output_ids_to_text(self, idxs):
+        return " ".join(self.out_vocabulary_inverse[s] for s in idxs)
