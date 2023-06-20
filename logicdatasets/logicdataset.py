@@ -5,19 +5,29 @@ import torch
 
 
 class LogicDataSet(torch.utils.data.Dataset):
-    def __init__(self, vocab_path="vocabulary", data_path="data/test"):
+    def __init__(self, vocab_path="vocabulary", data_path="data/val", data_inputs=None):
         self.load_vocabulary(vocab_path)
         self.in_vocabulary_inverse = {v: k for k, v in self.in_vocabulary.items()}
         self.out_vocabulary_inverse = {v: k for k, v in self.out_vocabulary.items()}
-
-        self.file_to_data(data_path)
+        if data_inputs:
+            self.inputs_to_data(data_inputs)
+        else:
+            self.file_to_data(data_path)
         self.batch_dim = 1
+
+    def inputs_to_data(self, inputs):
+        """Input is a tuple of two lists (inputs, outputs)"""
+        self.in_lines, self.out_lines = inputs
+        self.build_idxs()
 
     def file_to_data(self, path):
         with open(path + ".src") as f:
             self.in_lines = f.readlines()
         with open(path + ".tgt") as f:
             self.out_lines = f.readlines()
+        self.build_idxs()
+
+    def build_idxs(self):
         self.in_idxs = [
             [self.in_vocabulary[s] for s in sentence.split()]
             for sentence in self.in_lines
